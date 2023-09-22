@@ -79,7 +79,10 @@ namespace UserNotePAD
                 };
 
             });
-
+            builder.Services.AddSession(options =>
+            {
+                options.Cookie.IsEssential = true; // Make the session cookie essential
+            });
             // Add services to the container.
             builder.Services.AddControllersWithViews();
             builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
@@ -99,7 +102,8 @@ namespace UserNotePAD
             app.UseStaticFiles();
 
             app.UseRouting();
-
+            app.UseSession();
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.MapControllerRoute(

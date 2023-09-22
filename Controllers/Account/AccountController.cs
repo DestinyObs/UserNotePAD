@@ -64,13 +64,20 @@ namespace UserNotePAD.Controllers.Account
             return View(response);
         }
 
-        
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+
+        [HttpGet]
+        //[ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
+            // Sign out the user
             await _signInManager.SignOutAsync();
+
+            // Optionally, you can clear the user's session and cookies
+            HttpContext.Session.Clear();
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+            // Redirect to the home page or another desired page
             return RedirectToAction("Index", "Home");
         }
 

@@ -169,57 +169,73 @@ height: 100%;
         <nav class="main-menu">
             <ul>
                 <li>
+                </li>
+                @if (User.Identity.IsAuthenticated)
+                {
                     <a asp-area="" asp-controller="Home" asp-action="Index">
                         <i class="fa fa-home fa-2x"></i>
                         <span class="nav-text">
-                            Home
+                            Dashboard
                         </span>
                     </a>
+                    <li class="has-subnav">
+                        <a href="#">
+                            <i class="fa fa-save fa-2x"></i>
+                            <span class="nav-text">
+                                Save Document
+                            </span>
+                        </a>
 
-                </li>
-                <li class="has-subnav">
-                    <a href="#">
-                        <i class="fa fa-search fa-2x"></i>
-                        <input class="nav-text" type="text" placeholder="Search" name="search" />
-                    </a>
+                    </li>
+                    <li class="has-subnav">
+                        <a href="#">
+                            <i class="fa fa-book fa-2x"></i>
+                            <span class="nav-text">
+                                Your Notes
+                            </span>
+                        </a>
+                    </li>
+                }
+                else
+                {
+                    <li class="has-subnav">
+                        <a href="#">
+                            <i class="fa fa-search fa-2x"></i>
+                            <input class="nav-text" type="text" placeholder="Search" name="search" />
+                        </a>
 
-                </li>
-                <li class="has-subnav">
-                    <a href="#">
-                        <i class="fa fa-save fa-2x"></i>
-                        <span class="nav-text">
-                            Save Document
-                        </span>
-                    </a>
+                    </li>
+                    <li class="has-subnav">
+                        <a href="#">
+                            <i class="fa fa-save fa-2x"></i>
+                            <span class="nav-text">
+                                Save Document
+                            </span>
+                        </a>
 
-                </li>
-                <li class="has-subnav">
-                    <a href="#">
-                        <i class="fa fa-repeat fa-2x"></i>
-                        <span class="nav-text">
-                            Redo 
-                        </span>
-                    </a>
+                    </li>
 
-                </li>
-                <li class="has-subnav">
-                    <a href="#">
-                        <i class="fa fa-undo fa-2x"></i>
-                        <span class="nav-text">
-                            Undo
-                        </span>
-                    </a>
+                    <li class="has-subnav">
+                        <a href="#">
+                            <i class="fa fa-repeat fa-2x"></i>
+                            <span class="nav-text">
+                                Redo
+                            </span>
+                        </a>
 
-                </li>
-                <li class="has-subnav">
-                    <a href="#">
-                        <i class="fa fa-book fa-2x"></i>
-                        <span class="nav-text">
-                            Your Notes
-                        </span>
-                    </a>
+                    </li>
+                    <li class="has-subnav">
+                        <a href="#">
+                            <i class="fa fa-undo fa-2x"></i>
+                            <span class="nav-text">
+                                Undo
+                            </span>
+                        </a>
 
-                </li>
+                    </li>
+
+                }
+               
             </ul>
 
             <ul class="logout">
@@ -234,7 +250,8 @@ height: 100%;
                         </a>
                     </li>
                     <li>
-                        <a asp-area="" asp-controller="Account" asp-action="Logout">
+                        <a asp-action="Logout" asp-controller="Account" asp-area="">
+                            <!-- Use the appropriate URL for the logout action -->
                             <i class="fa fa-power-off fa-2x"></i>
                             <span class="nav-text">
                                 Logout
