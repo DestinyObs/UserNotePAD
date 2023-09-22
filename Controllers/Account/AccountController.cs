@@ -1,4 +1,4 @@
-﻿using ChatBIDApp.Services;
+﻿
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -18,6 +18,8 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication;
 
 namespace UserNotePAD.Controllers.Account
 {
@@ -94,7 +96,7 @@ namespace UserNotePAD.Controllers.Account
                 {
                     UserName = userDto.UserName,
                     PasswordHash = userDto.Password,
-                    Email = userDto.Email,
+                    Email = userDto.Email.ToLowerInvariant(),
                     Occupation = userDto.Occupation,
                     VerificationCode = otp,
                     VerificationCodeExpiration = DateTime.UtcNow.AddMinutes(20),
@@ -145,62 +147,99 @@ namespace UserNotePAD.Controllers.Account
                 return StatusCode((int)HttpStatusCode.InternalServerError, ex.Message);
             }
         }
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Login(LoginDto model, string returnUrl = null)
+        public IActionResult Login()
         {
-            if (ModelState.IsValid)
-            {
-                var user = await _userManager.FindByEmailAsync(model.Email);
-
-                if (user != null)
-                {
-                    if (!user.IsVerified)
-                    {
-                        // User is not verified; send a new verification code to their email
-                        string otp = GenerateOTP();
-
-                        // Update the user's verification code and expiration time
-                        user.VerificationCode = otp;
-                        user.VerificationCodeExpiration = DateTime.UtcNow.AddMinutes(5);
-                        await _userManager.UpdateAsync(user);
-
-                        // Send verification email
-                        var emailHtml = await RenderViewToStringAsync("EmailNot", user);
-                        emailHtml = emailHtml.Replace("{{VerificationLink}}", "https://localhost:7137/verify?code=" + user.VerificationCode);
-
-                        bool otpSent = SendEmail(user.Email, "Email Verification", emailHtml);
-
-                        if (!otpSent)
-                        {
-                            return StatusCode((int)HttpStatusCode.InternalServerError, "Failed to send OTP email. Please try again later.");
-                        }
-
-                        TempData["Error"] = "Your account is not verified. We've sent a new verification code to your email.";
-                        return RedirectToAction("Login", "Account");
-                    }
-                }
-
-                var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
-
-                if (result.Succeeded)
-                {
-                    // Redirect to the returnUrl if provided, or a default page
-                    if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-                    {
-                        return Redirect(returnUrl);
-                    }
-                    else
-                    {
-                        return RedirectToAction("Index", "Home"); // You can change this to the desired landing page.
-                    }
-                }
-
-                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
-            }
-
-            return View(model);
+            var response = new LoginDto();
+            return View(response);
         }
+
+        [HttpPost("Account/Login")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Login(LoginDto loginDto, bool rememberMe)
+        {
+            try
+            {
+                // Try to find the user by Email
+                var user = await _userManager.FindByEmailAsync(loginDto.Email.ToLowerInvariant());
+
+                if (user == null)
+                {
+                    TempData["Error"] = "Invalid Email";
+                    return RedirectToAction("Login", "Account");
+                }
+
+                if (!await _userManager.CheckPasswordAsync(user, loginDto.Password))
+                {
+                    TempData["Error"] = "Incorrect Password";
+                    return RedirectToAction("Login", "Account");
+                }
+
+                // Check if the user is verified (customize this logic based on your app)
+                if (!user.IsVerified)
+                {
+                    // User is not verified; send a new verification code to their email
+                    string otp = GenerateOTP();
+
+                    // Update the user's verification code and expiration time
+                    user.VerificationCode = otp;
+                    user.VerificationCodeExpiration = DateTime.UtcNow.AddMinutes(5);
+                    await _userManager.UpdateAsync(user);
+
+                    // Send verification email
+                    var emailHtml = await RenderViewToStringAsync("EmailNot", user);
+                    emailHtml = emailHtml.Replace("{{VerificationLink}}", "https://localhost:7137/verify?code=" + user.VerificationCode);
+
+                    bool otpSent = SendEmail(user.Email, "Email Verification", emailHtml);
+
+                    if (!otpSent)
+                    {
+                        return StatusCode((int)HttpStatusCode.InternalServerError, "Failed to send OTP email. Please try again later.");
+                    }
+
+                    TempData["Error"] = "Your account is not verified. We've sent a new verification code to your email.";
+
+                    // Return the "verify" view
+                    var verificationDto = new VerificationDto
+                    {
+                        // Pass any necessary data to the view
+                    };
+
+                    return View("Verify", verificationDto);
+                }
+
+                // User is verified; generate a JWT token
+                var token = GenerateJwtToken(user);
+
+                // Store user info in TempData for the view (customize as needed)
+                TempData["UserId"] = user.Id;
+                TempData["UserName"] = user.UserName;
+                TempData["UserEmail"] = user.Email;
+
+                // If rememberMe is true, set the authentication cookie to be persistent
+                var authProperties = new AuthenticationProperties
+                {
+                    IsPersistent = rememberMe,
+                };
+
+                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(new ClaimsIdentity(new List<Claim>
+        {
+            // Add any claims you need for the user here
+        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Name, user.UserName),
+            // Add more claims as needed
+        }, CookieAuthenticationDefaults.AuthenticationScheme)), authProperties);
+
+                return RedirectToAction("Index", "Home"); // Redirect to the dashboard or desired page
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Internal server error: {ex.Message}";
+                return RedirectToAction("Login"); // Redirect to the login view with an error message
+            }
+        }
+
+
+
 
         // Helper method to render a view to string
         private async Task<string> RenderViewToStringAsync(string viewName, object model)
@@ -236,11 +275,7 @@ namespace UserNotePAD.Controllers.Account
         }
 
 
-        public IActionResult Login()
-        {
-            var response = new LoginDto();
-            return View(response);
-        }
+     
 
         private string GenerateJwtToken(User user)
         {
@@ -256,7 +291,7 @@ namespace UserNotePAD.Controllers.Account
                 issuer: _configuration["JwtSettings:Issuer"],
                 audience: _configuration["JwtSettings:Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddHours(100), // Token expiration time (adjust as needed)
+                expires: DateTime.UtcNow.AddHours(48), // Token expiration time (adjust as needed)
                 signingCredentials: credentials
             );
 

@@ -81,6 +81,13 @@
                                 <label asp-for="Password">Enter your password</label>
                                 <span asp-validation-for="Password" class="text-danger"></span>
                             </div>
+                        </div>
+                        <div>
+                            <input asp-for="RememberMe" type="checkbox" id="remember-me" />
+                            <label asp-for="RememberMe" for="remember-me">Remember me</label>
+                            <span asp-validation-for="RememberMe" class="text-danger"></span>
+                        </div>
+                        <div class="row">
                             <label style='float: right;'>
                                 <a class='' style="color: #261759:" href='#!'><b>Forgot Password?</b></a>
                             </label>

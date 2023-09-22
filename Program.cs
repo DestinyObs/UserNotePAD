@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -22,6 +23,12 @@ namespace UserNotePAD
                 options.UseSqlServer(builder.Configuration.GetConnectionString("MyString"));
             });
 
+            builder.Services.AddAuthorization(options =>
+            {
+                options.DefaultPolicy = new AuthorizationPolicyBuilder(JwtBearerDefaults.AuthenticationScheme)
+                    .RequireAuthenticatedUser()
+                    .Build();
+            });
             builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
             {
                 options.Password.RequireDigit = true;
@@ -48,7 +55,15 @@ namespace UserNotePAD
             builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
 
             builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
-            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
+
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+            })
+            .AddCookie()
+            .AddJwtBearer(options =>
             {
                 options.RequireHttpsMetadata = false;
                 options.SaveToken = true;
@@ -64,14 +79,6 @@ namespace UserNotePAD
                 };
 
             });
-
-            builder.Services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-            });
-
 
             // Add services to the container.
             builder.Services.AddControllersWithViews();
