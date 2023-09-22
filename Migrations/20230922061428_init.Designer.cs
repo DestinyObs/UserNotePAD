@@ -12,7 +12,7 @@ using UserNotePAD.Data;
 namespace UserNotePAD.Migrations
 {
     [DbContext(typeof(NotePadDbContext))]
-    [Migration("20230921104117_init")]
+    [Migration("20230922061428_init")]
     partial class init
     {
         /// <inheritdoc />
@@ -178,7 +178,12 @@ namespace UserNotePAD.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("UserId1")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId1");
 
                     b.ToTable("Notes");
                 });
@@ -203,6 +208,9 @@ namespace UserNotePAD.Migrations
                         .HasColumnType("nvarchar(256)");
 
                     b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsVerified")
                         .HasColumnType("bit");
 
                     b.Property<bool>("LockoutEnabled")
@@ -232,10 +240,6 @@ namespace UserNotePAD.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
 
-                    b.Property<string>("ProfilePhotoUrl")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
@@ -245,6 +249,13 @@ namespace UserNotePAD.Migrations
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("VerificationCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("VerificationCodeExpiration")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
@@ -308,6 +319,17 @@ namespace UserNotePAD.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("UserNotePAD.Models.Note", b =>
+                {
+                    b.HasOne("UserNotePAD.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId1")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 #pragma warning restore 612, 618
         }

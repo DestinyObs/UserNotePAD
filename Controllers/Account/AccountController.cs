@@ -13,24 +13,47 @@ using UserNotePAD.Models;
 using UserNotePAD.ViewModels;
 using static System.Net.WebRequestMethods;
 using UserNotePAD.ViewModels.Dto;
+using Microsoft.AspNetCore.Mvc.Abstractions;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.AspNetCore.Mvc.ViewEngines;
 
 namespace UserNotePAD.Controllers.Account
 {
     public class AccountController : Controller
     {
+        private readonly IServiceProvider _serviceProvider;
+        private readonly ICompositeViewEngine _razorViewEngine;
+        private readonly ITempDataProvider _tempDataProvider;
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
         private readonly SmtpSettings _smtpSettings;
         private readonly NotePadDbContext _dbContext;
         private readonly IConfiguration _configuration;
 
-        public AccountController(UserManager<User> userManager, SignInManager<User> signInManager, IOptions<SmtpSettings> smtpSettings, NotePadDbContext dbContext, IConfiguration configuration)
+        public AccountController(UserManager<User> userManager, SignInManager<User> signInManager, IOptions<SmtpSettings> smtpSettings, NotePadDbContext dbContext, IConfiguration configuration, IServiceProvider serviceProvider, ICompositeViewEngine razorViewEngine, ITempDataProvider tempDataProvider)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _smtpSettings = smtpSettings.Value;
             _dbContext = dbContext;
             _configuration = configuration;
+            _serviceProvider = serviceProvider;
+            _razorViewEngine = razorViewEngine;
+            _tempDataProvider = tempDataProvider;
+        }
+
+        [HttpGet("verify")]
+        public IActionResult Verify()
+        {
+            return View("Verify","Account");
+        }
+
+        [HttpGet("EmailNot")]
+        public IActionResult EmailNot()
+        {
+            return View("EmailNot"); 
         }
 
         public IActionResult Register()
@@ -48,6 +71,7 @@ namespace UserNotePAD.Controllers.Account
             await _signInManager.SignOutAsync();
             return RedirectToAction("Index", "Home");
         }
+
 
 
         [HttpPost]
@@ -71,7 +95,9 @@ namespace UserNotePAD.Controllers.Account
                     UserName = userDto.UserName,
                     PasswordHash = userDto.Password,
                     Email = userDto.Email,
-                    Occupation = userDto.Occupation // Add the occupation field
+                    Occupation = userDto.Occupation,
+                    VerificationCode = otp,
+                    VerificationCodeExpiration = DateTime.UtcNow.AddMinutes(20)
                 };
 
                 // Check if email already exists
@@ -88,22 +114,29 @@ namespace UserNotePAD.Controllers.Account
 
                 if (result.Succeeded)
                 {
+                    // Render the EmailNot.cshtml view to get the HTML content
+                    var emailHtml = await RenderViewToStringAsync("EmailNot", user);
+
+                    // Replace a placeholder in the HTML content with the OTP
+                    emailHtml = emailHtml.Replace("{{VerificationLink}}", "https://localhost:7137/verify?code=" + user.VerificationCode);
+
+                    // Send the email with the modified HTML content
                     bool otpSent = false;
-                    // Send OTP
-                    otpSent = SendOTPViaEmail(user.Email, otp);
+
+                    otpSent = SendEmail(user.Email, "Email Verification", emailHtml);
 
                     if (!otpSent)
                     {
-                        return StatusCode((int)HttpStatusCode.InternalServerError, "Failed to send OTP. Please try again later.");
+                        return StatusCode((int)HttpStatusCode.InternalServerError, "Failed to send OTP email. Please try again later.");
                     }
 
                     // Redirect to the "Index" page after successful registration
-                    return RedirectToAction("Login", "Account");
+                    return RedirectToAction("Verify", "Account");
                 }
                 else
                 {
                     ModelState.AddModelError(string.Empty, "Registration failed. Please check the provided information.");
-                    return View(userDto); 
+                    return View(userDto);
                 }
             }
             catch (Exception ex)
@@ -112,7 +145,45 @@ namespace UserNotePAD.Controllers.Account
             }
         }
 
+        // Helper method to render a view to string
+        private async Task<string> RenderViewToStringAsync(string viewName, object model)
+        {
+            var httpContext = new DefaultHttpContext { RequestServices = _serviceProvider };
+            var actionContext = new ActionContext(httpContext, new RouteData(), new ActionDescriptor());
 
+            using (var sw = new StringWriter())
+            {
+                var viewResult = _razorViewEngine.FindView(actionContext, viewName, false);
+
+                if (viewResult.View == null)
+                {
+                    throw new ArgumentNullException($"{viewName} does not match any available view");
+                }
+
+                var viewData = new ViewDataDictionary(new EmptyModelMetadataProvider(), new ModelStateDictionary())
+                {
+                    Model = model
+                };
+                var viewContext = new ViewContext(
+                    actionContext,
+                    viewResult.View,
+                    viewData,
+                    new TempDataDictionary(actionContext.HttpContext, _tempDataProvider),
+                    sw,
+                    new HtmlHelperOptions()
+                );
+
+                await viewResult.View.RenderAsync(viewContext);
+                return sw.ToString();
+            }
+        }
+
+
+        public IActionResult Login()
+        {
+            var response = new LoginDto();
+            return View(response);
+        }
 
         private string GenerateJwtToken(User user)
         {
@@ -142,6 +213,7 @@ namespace UserNotePAD.Controllers.Account
             int otpValue = random.Next(100000, 999999);
             return otpValue.ToString();
         }
+
         private bool IsValidEmail(string email)
         {
             try
@@ -166,7 +238,7 @@ namespace UserNotePAD.Controllers.Account
                 smtpClient.Credentials = new NetworkCredential(_smtpSettings.Username, _smtpSettings.Password);
                 smtpClient.EnableSsl = true;
 
-                mail.From = new MailAddress(_smtpSettings.Username);
+                mail.From = new MailAddress("NoReply@CandaceBID.com");
                 mail.To.Add(email);
                 mail.Subject = subject;
                 mail.Body = body;
