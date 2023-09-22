@@ -29,7 +29,7 @@
         .input-field input[type=text]:focus + label,
         .input-field input[type=email]:focus + label,
         .input-field input[type=password]:focus + label {
-            color: #261759;
+            color: #ffff;
         }
 
         .input-field input[type=date]:focus,
@@ -39,6 +39,13 @@
             border-bottom: 2px solid #261759;
             box-shadow: none;
         }
+
+        button:hover {
+            background-color: white;
+            color: #261759;
+            border: 2px solid #261759;
+        }
+
     </style>
 </head>
 
@@ -116,7 +123,7 @@
 
                 </div>
             </div>
-            <h6 style="color:#261759;" class="text">Don't have an account</h6><a href="#!">Sign-Up</a>
+            <h6 style="color:#261759;" class="text">Already have an account</h6><a href="@Url.Action("Login", "Account")>Login</a>
         </center>
 
         <div class="section"></div>

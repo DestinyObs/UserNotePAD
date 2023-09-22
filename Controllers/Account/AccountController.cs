@@ -62,7 +62,7 @@ namespace UserNotePAD.Controllers.Account
             return View(response);
         }
 
-
+        
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -97,7 +97,8 @@ namespace UserNotePAD.Controllers.Account
                     Email = userDto.Email,
                     Occupation = userDto.Occupation,
                     VerificationCode = otp,
-                    VerificationCodeExpiration = DateTime.UtcNow.AddMinutes(20)
+                    VerificationCodeExpiration = DateTime.UtcNow.AddMinutes(20),
+                    EmailNot = userDto.Email
                 };
 
                 // Check if email already exists
@@ -143,6 +144,62 @@ namespace UserNotePAD.Controllers.Account
             {
                 return StatusCode((int)HttpStatusCode.InternalServerError, ex.Message);
             }
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Login(LoginDto model, string returnUrl = null)
+        {
+            if (ModelState.IsValid)
+            {
+                var user = await _userManager.FindByEmailAsync(model.Email);
+
+                if (user != null)
+                {
+                    if (!user.IsVerified)
+                    {
+                        // User is not verified; send a new verification code to their email
+                        string otp = GenerateOTP();
+
+                        // Update the user's verification code and expiration time
+                        user.VerificationCode = otp;
+                        user.VerificationCodeExpiration = DateTime.UtcNow.AddMinutes(5);
+                        await _userManager.UpdateAsync(user);
+
+                        // Send verification email
+                        var emailHtml = await RenderViewToStringAsync("EmailNot", user);
+                        emailHtml = emailHtml.Replace("{{VerificationLink}}", "https://localhost:7137/verify?code=" + user.VerificationCode);
+
+                        bool otpSent = SendEmail(user.Email, "Email Verification", emailHtml);
+
+                        if (!otpSent)
+                        {
+                            return StatusCode((int)HttpStatusCode.InternalServerError, "Failed to send OTP email. Please try again later.");
+                        }
+
+                        TempData["Error"] = "Your account is not verified. We've sent a new verification code to your email.";
+                        return RedirectToAction("Login", "Account");
+                    }
+                }
+
+                var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
+
+                if (result.Succeeded)
+                {
+                    // Redirect to the returnUrl if provided, or a default page
+                    if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                    {
+                        return Redirect(returnUrl);
+                    }
+                    else
+                    {
+                        return RedirectToAction("Index", "Home"); // You can change this to the desired landing page.
+                    }
+                }
+
+                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+            }
+
+            return View(model);
         }
 
         // Helper method to render a view to string

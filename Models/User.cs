@@ -8,6 +8,7 @@ namespace UserNotePAD.Models
         public string VerificationCode { get; set; }
         public bool IsVerified { get; set; } = false;
         public DateTime? VerificationCodeExpiration { get; set; }
+        public string EmailNot { get; set; }
 
     }
 }
