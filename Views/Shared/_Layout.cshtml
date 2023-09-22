@@ -223,30 +223,47 @@ height: 100%;
             </ul>
 
             <ul class="logout">
-                <li>
-                    <a asp-area="" asp-controller="Home" asp-action="Privacy">
-                        <i class="fa fa-info fa-2x"></i>
-                        <span class="nav-text">
-                            PRIVACY
-                        </span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#">
-                        <i class="fa fa-power-off fa-2x"></i>
-                        <span class="nav-text">
-                            Logout
-                        </span>
-                    </a>
-                    
-                </li>
-                <li>
+                 @if (User.Identity.IsAuthenticated)
+                {
+                    <li>
+                        <a asp-area="" asp-controller="Home" asp-action="Privacy">
+                            <i class="fa fa-info fa-2x"></i>
+                            <span class="nav-text">
+                                Privacy
+                            </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#">
+                            <i class="fa fa-power-off fa-2x"></i>
+                            <span class="nav-text">
+                                Logout
+                            </span>
+                        </a>
+
+                    </li>
+                }
+                else
+                {
+                    <li>
                     <a asp-area="" asp-controller="Account" asp-action="Register">
                         <i class="fa fa-user fa-2x"></i>
                         <span class="nav-text">
                             Register
                         </span>
                     </a>
+                    </li>
+                    <li>
+                        <a asp-area="" asp-controller="Account" asp-action="Login">
+                            <i class="fa fa-signin fa-2x"></i>
+                            <span class="nav-text">
+                                Login
+                            </span>
+                        </a>
+                    </li>
+                    
+                }
+               
             </ul>
         </nav>
     </header>

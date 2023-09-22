@@ -1,4 +1,4 @@
-﻿namespace UserNotePAD.ViewModels
+﻿namespace UserNotePAD.ViewModels.Dto
 {
     public class UserRegistrationDto
     {

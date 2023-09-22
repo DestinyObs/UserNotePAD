@@ -12,6 +12,7 @@ using UserNotePAD.Data;
 using UserNotePAD.Models;
 using UserNotePAD.ViewModels;
 using static System.Net.WebRequestMethods;
+using UserNotePAD.ViewModels.Dto;
 
 namespace UserNotePAD.Controllers.Account
 {
@@ -97,7 +98,7 @@ namespace UserNotePAD.Controllers.Account
                     }
 
                     // Redirect to the "Index" page after successful registration
-                    return RedirectToAction("Index", "Home");
+                    return RedirectToAction("Login", "Account");
                 }
                 else
                 {
