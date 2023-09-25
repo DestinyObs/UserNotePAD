@@ -1,4 +1,6 @@
-﻿@{
+﻿@using UserNotePAD.Models
+@model Note
+@{
     ViewData["Title"] = "Home Page";
 }
 
@@ -15,6 +17,11 @@
 </head>
 <style>
 
+       @@page {
+        size: A4;
+        margin: 0; /* Remove default margins */
+    }
+
     * {
         font-family: sans-serif;
         margin: 0;
@@ -26,11 +33,12 @@
     }
 
     #container {
-        width: 98%;
+        width: 100%;
         padding: 20px;
-        background: #DDD;
-        position: fixed;
+        background: none;
+        position: relative;
         border-bottom: 3px solid #AAA;
+        box-sizing:border-box;
     }
 
     .spacer {
@@ -132,13 +140,14 @@
         font-family: "Times New Roman",serif;
         background: #FFF;
         outline: none;
-        width: 90%;
+        width: 100%;
         font-size: 14pt;
         /* margin-left: 230px; */
         padding: 40px;
         height: 1500px;
         color: black;
-        box-shadow: 0 0 20px #AAA;
+        box-shadow: 0px 0px 30px #AAA;
+        box-sizing: inherit;
     }
 
 
@@ -146,38 +155,33 @@
             font-family: "Times New Roman",serif;
         }
 
+     .page {
+        page-break-before: always;
+        min-height: 100vh;
+        padding: 20px;
+    }
+
+
 </style>
 <body>
+
     <div class="spacer"></div>
-
-    <div id="body" contenteditable="true">
-        This uses contenteditable, quite a neat little feature.
-
+    <div id="container">
+        <!-- Title and toolbar here if needed -->
+        <div id="body" contenteditable="true">
+            <!-- Initial page -->
+            <div class="page" contenteditable="true">
+                <p>Welcome to UserNotePAD</p>
+                <p>Start typing your notes here...</p>
+            </div>
+        </div>
     </div>
     <div class="spacer"></div>
 
 
 </body>
+<script src="~/js/page.js" asp-append-version="true"></script>
 <script>
-
-    // function getSelectionHtml() {
-    //     var html = "";
-    //     if (typeof window.getSelection != "undefined") {
-    //         var sel = window.getSelection();
-    //         if (sel.rangeCount) {
-    //             var container = document.createElement("div");
-    //             for (var i = 0, len = sel.rangeCount; i < len; ++i) {
-    //                 container.appendChild(sel.getRangeAt(i).cloneContents());
-    //             }
-    //             html = container.innerHTML;
-    //         }
-    //     } else if (typeof document.selection != "undefined") {
-    //         if (document.selection.type == "Text") {
-    //             html = document.selection.createRange().htmlText;
-    //         }
-    //     }
-    //     alert(html);
-    // }
 
 </script>
 </html>

@@ -53,7 +53,6 @@ namespace UserNotePAD
 
             //Image Cloudinary Upload
             builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
-
             builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
 
             builder.Services.AddAuthentication(options =>
@@ -73,12 +72,11 @@ namespace UserNotePAD
                     ValidateAudience = true,
                     ValidAudience = builder.Configuration["JwtSettings:Audience"],
                     ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"])),
-                    // Set the clock skew to TimeSpan.Zero to validate tokens without considering expiration
-                    //ClockSkew = TimeSpan.Zero
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"]))
                 };
 
             });
+
             builder.Services.AddSession(options =>
             {
                 options.Cookie.IsEssential = true; // Make the session cookie essential

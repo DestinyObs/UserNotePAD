@@ -1,4 +1,6 @@
-﻿<!DOCTYPE html>
+﻿
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -162,6 +164,7 @@ height: 100%;
     }
 
     }
+
 </style>
 <body>
     <header>
@@ -172,29 +175,79 @@ height: 100%;
                 </li>
                 @if (User.Identity.IsAuthenticated)
                 {
-                    <a asp-area="" asp-controller="Home" asp-action="Index">
-                        <i class="fa fa-home fa-2x"></i>
-                        <span class="nav-text">
-                            Dashboard
-                        </span>
-                    </a>
                     <li class="has-subnav">
                         <a href="#">
+                            <i class="fa fa-search fa-2x"></i>
+                            <input class="nav-text" type="text" placeholder="Search" name="search" />
+                        </a>
+
+                    </li>
+                    <li>
+                        <a asp-area="" asp-controller="Home" asp-action="Index">
+                            <i class="fa fa-home fa-2x"></i>
+                            <span class="nav-text">
+                                Dashboard
+                            </span>
+                        </a>
+
+                    </li>
+                    <li class="has-subnav">
+                        <a asp-controller="Notes" asp-action="Save">
                             <i class="fa fa-save fa-2x"></i>
                             <span class="nav-text">
-                                Save Document
+                                Save Note
+                            </span>
+                        </a>
+
+                    </li>
+                    <li class="has-subnav">
+                        <a asp-controller="Notes" asp-action="Create">
+                            <i class="fa fa-file fa-2x"></i>
+                            <span class="nav-text">
+                                New Note
                             </span>
                         </a>
 
                     </li>
                     <li class="has-subnav">
                         <a href="#">
-                            <i class="fa fa-book fa-2x"></i>
+                            <i class="fa fa-repeat fa-2x"></i>
                             <span class="nav-text">
-                                Your Notes
+                                Redo
                             </span>
                         </a>
+
                     </li>
+                    <li class="has-subnav">
+                        <a href="#">
+                            <i class="fa fa-undo fa-2x"></i>
+                            <span class="nav-text">
+                                Undo
+                            </span>
+                        </a>
+
+                    </li>
+                    <li class="has-subnav" style=" position: relative; display: table;  border-collapse: collapse; border-spacing: 0; color: #ffff; font-family: arial; font-size: 14px; text-decoration: none; -webkit-transform: translateZ(0) scale(1,1); -webkit-transition: all .1s linear; transition: all .1s linear;">
+                            <i class="fa fa-book fa-2x"></i>
+                            &nbsp;&nbsp;
+                            <span class="nav-text">
+                                @if (Model != null && Model.Notes != null && Model.Notes.Any())
+                                {
+                                    foreach (var note in Model.Notes)
+                                    {
+                                        <a href="@Url.Action("Edit", "Notes", new { id = note.Id })">@note.Title</a>
+                                    }
+                                }
+                                else
+                                {
+                                    <span>No Notes</span>
+                                }
+                            </span>
+                            <i class="fa fa-delete fa-2x"></i>
+                    </li>
+
+
+
                 }
                 else
                 {
@@ -209,7 +262,7 @@ height: 100%;
                         <a href="#">
                             <i class="fa fa-save fa-2x"></i>
                             <span class="nav-text">
-                                Save Document
+                                New Document
                             </span>
                         </a>
 

@@ -245,9 +245,6 @@ namespace UserNotePAD.Controllers.Account
             }
         }
 
-
-
-
         // Helper method to render a view to string
         private async Task<string> RenderViewToStringAsync(string viewName, object model)
         {
