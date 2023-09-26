@@ -65,7 +65,6 @@ namespace UserNotePAD.Controllers.Account
         }
 
 
-
         [HttpGet]
         //[ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
@@ -80,7 +79,6 @@ namespace UserNotePAD.Controllers.Account
             // Redirect to the home page or another desired page
             return RedirectToAction("Index", "Home");
         }
-
 
 
         [HttpPost]
@@ -120,9 +118,10 @@ namespace UserNotePAD.Controllers.Account
                 }
 
                 // Create user with password
-                var result = await _userManager.CreateAsync(user, userDto.Password);
+                var result = await _userManager.CreateAsync(user);
 
                 if (result.Succeeded)
+
                 {
                     // Render the EmailNot.cshtml view to get the HTML content
                     var emailHtml = await RenderViewToStringAsync("EmailNot", user);
@@ -154,6 +153,7 @@ namespace UserNotePAD.Controllers.Account
                 return StatusCode((int)HttpStatusCode.InternalServerError, ex.Message);
             }
         }
+
         public IActionResult Login()
         {
             var response = new LoginDto();
@@ -178,7 +178,7 @@ namespace UserNotePAD.Controllers.Account
                 if (!await _userManager.CheckPasswordAsync(user, loginDto.Password))
                 {
                     TempData["Error"] = "Incorrect Password";
-                    return RedirectToAction("Login", "Account");
+                    return RedirectToAction("Login", "Account");          
                 }
 
                 // Check if the user is verified (customize this logic based on your app)
@@ -230,8 +230,9 @@ namespace UserNotePAD.Controllers.Account
 
                 await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(new ClaimsIdentity(new List<Claim>
         {
+                    
             // Add any claims you need for the user here
-        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Name, user.UserName),
             // Add more claims as needed
         }, CookieAuthenticationDefaults.AuthenticationScheme)), authProperties);
@@ -277,9 +278,6 @@ namespace UserNotePAD.Controllers.Account
                 return sw.ToString();
             }
         }
-
-
-     
 
         private string GenerateJwtToken(User user)
         {

@@ -53,6 +53,7 @@ namespace UserNotePAD
 
             //Image Cloudinary Upload
             builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
+
             builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
 
             builder.Services.AddAuthentication(options =>
